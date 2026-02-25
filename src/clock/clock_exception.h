@@ -1,5 +1,5 @@
-#ifndef CLOCK_EXCEPTION_H
-#define CLOCK_EXCEPTION_H
+#ifndef TLAC_CLOCK_EXCEPTION_H
+#define TLAC_CLOCK_EXCEPTION_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -9,9 +9,8 @@ typedef enum clock_error {
 	CLOCK_OK = 0,
 	CLOCK_ERR_INVALID_ARGUMENT = 1,
 	CLOCK_ERR_IO = 2,
-	CLOCK_ERR_NETWORK = 3,
-	CLOCK_ERR_NOMEM = 4,
-	CLOCK_ERR_INTERNAL = 5
+	CLOCK_ERR_NOMEM = 3,
+	CLOCK_ERR_INTERNAL = 4
 } clock_error_t;
 
 const char*

@@ -1,4 +1,6 @@
 #include "file_clock.h"
+
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -24,9 +26,8 @@ static int unlock_fd(int fd) {
 }
 
 static int64_t
-file_next_time(instrumentation_clock_t* self, int64_t clock_value) {
+file_next_time(tlac_clock_t* self, int64_t clock_value) {
 	file_clock_impl_t* impl = (file_clock_impl_t*)self->impl;
-
 	pthread_mutex_lock(&impl->mu);
 	if (lock_fd(impl->fd) != 0) {
 		pthread_mutex_unlock(&impl->mu);
@@ -44,7 +45,7 @@ file_next_time(instrumentation_clock_t* self, int64_t clock_value) {
 }
 
 static void
-file_destroy(instrumentation_clock_t* self) {
+file_destroy(tlac_clock_t* self) {
 	if (!self) return;
 	file_clock_impl_t* impl = (file_clock_impl_t*)self->impl;
 	if (impl) {
@@ -56,16 +57,21 @@ file_destroy(instrumentation_clock_t* self) {
 	free(self);
 }
 
-instrumentation_clock_t*
+tlac_clock_t*
 file_clock_create(const char* path, clock_error_t* err) {
-	if (err) *err = CLOCK_OK;
-	if (!path || !path[0]) { if (err) *err = CLOCK_ERR_INVALID_ARGUMENT; return NULL; }
-
-	instrumentation_clock_t* c = (instrumentation_clock_t*)calloc(1, sizeof(*c));
-	if (!c) { if (err) *err = CLOCK_ERR_NOMEM; return NULL; }
+	assert(path && path[0]);
+	tlac_clock_t* c = (tlac_clock_t*)calloc(1, sizeof(*c));
+	if (!c) {
+		if (err) *err = CLOCK_ERR_NOMEM;
+		return NULL;
+	}
 
 	file_clock_impl_t* impl = (file_clock_impl_t*)calloc(1, sizeof(*impl));
-	if (!impl) { free(c); if (err) *err = CLOCK_ERR_NOMEM; return NULL; }
+	if (!impl) {
+		free(c);
+		if (err) *err = CLOCK_ERR_NOMEM;
+		return NULL;
+	}
 
 	impl->fd = open(path, O_RDWR | O_CREAT, 0644);
 	if (impl->fd < 0) {
@@ -93,8 +99,9 @@ file_clock_create(const char* path, clock_error_t* err) {
 
 	pthread_mutex_init(&impl->mu, NULL);
 
-	c->get_next_time = file_next_time;
+	c->next_time = file_next_time;
 	c->destroy = file_destroy;
+	c->type = CLOCK_FILE;
 	c->impl = impl;
 	return c;
 }

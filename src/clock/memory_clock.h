@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-instrumentation_clock_t*
+tlac_clock_t*
 memory_clock_create(clock_error_t* err);
 
 #ifdef __cplusplus

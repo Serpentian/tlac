@@ -1,35 +1,43 @@
-#ifndef INSTRUMENTATION_CLOCK_H
-#define INSTRUMENTATION_CLOCK_H
+#ifndef TLAC_CLOCK_H
+#define TLAC_CLOCK_H
 
+#include <assert.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct instrumentation_clock
-instrumentation_clock_t;
+typedef enum clock_type {
+       CLOCK_MEMORY = 0,
+       CLOCK_FILE   = 1,
+} tlac_clock_type_t;
+
+typedef struct clock tlac_clock_t;
 
 typedef int64_t
-(*clock_next_time_fn)(instrumentation_clock_t* self, int64_t clock_value);
+(*clock_next_time_fn)(tlac_clock_t* self, int64_t clock_value);
 
 typedef void
-(*clock_destroy_fn)(instrumentation_clock_t* self);
+(*clock_destroy_fn)(tlac_clock_t* self);
 
-struct instrumentation_clock {
-	clock_next_time_fn get_next_time;
+struct clock {
+	clock_next_time_fn next_time;
 	clock_destroy_fn destroy;
+	tlac_clock_type_t type;
 	void* impl;
 };
 
 static inline int64_t
-clock_get_next_time(instrumentation_clock_t* c, int64_t clock_value) {
-	return c && c->get_next_time ? c->get_next_time(c, clock_value) : -1;
+clock_next_time(tlac_clock_t* c, int64_t clock_value) {
+	assert(c && c->next_time);
+	return c->next_time(c, clock_value);
 }
 
-static inline int64_t
-clock_get_next_time_default(instrumentation_clock_t* c) {
-	return clock_get_next_time(c, 0);
+static inline void
+clock_destroy(tlac_clock_t* c) {
+	assert(c && c->destroy);
+	c->destroy(c);
 }
 
 #ifdef __cplusplus

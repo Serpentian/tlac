@@ -1,7 +1,6 @@
 #include "tla_tracer.h"
 #include "trace_item.h"
 #include "helper/ndjson_serializer.h"
-#include "clock/local_clock.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,7 +23,7 @@ typedef struct update_entry {
 
 struct tla_tracer {
 	char guid[64];
-	instrumentation_clock_t* clock;
+	tlac_clock_t* clock;
 	FILE* out;
 	update_entry_t* updates;
 	pthread_mutex_t mu;
@@ -97,8 +96,8 @@ static void uuid_like(char out[64]) {
 	  (a ^ b ^ c) & 0xffffffffffffULL);
 }
 
-tla_tracer_t* tla_tracer_create(const char* trace_path, instrumentation_clock_t* clock) {
-	if (!trace_path || !trace_path[0]) return NULL;
+tla_tracer_t* tla_tracer_create(const char* trace_path, tlac_clock_t* clock) {
+	if (!trace_path || !trace_path[0] || !clock) return NULL;
 
 	FILE* f = fopen(trace_path, "wb");
 	if (!f) return NULL;
@@ -113,19 +112,7 @@ tla_tracer_t* tla_tracer_create(const char* trace_path, instrumentation_clock_t*
 	t->updates = NULL;
 	pthread_mutex_init(&t->mu, NULL);
 
-	if (clock) {
-		t->clock = clock; /* takes ownership */
-	} else {
-		clock_error_t err = CLOCK_OK;
-		t->clock = local_clock_create(&err);
-		if (!t->clock) {
-			fclose(f);
-			pthread_mutex_destroy(&t->mu);
-			free(t);
-			return NULL;
-		}
-	}
-
+	t->clock = clock; /* takes ownership */
 	return t;
 }
 
@@ -227,7 +214,7 @@ static int64_t log_changes_locked(tla_tracer_t* t, const char* event_name, const
 int64_t tla_tracer_log(tla_tracer_t* t, const char* event_name, const cJSON* event_args_array, int64_t clock_value, const char* desc) {
 	if (!t) return -1;
 
-	int64_t new_clock = clock_get_next_time(t->clock, clock_value);
+	int64_t new_clock = clock_next_time(t->clock, clock_value);
 	if (new_clock < 0) return -1;
 
 	pthread_mutex_lock(&t->mu);

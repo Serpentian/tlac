@@ -8,7 +8,7 @@ typedef struct {
 } memory_clock_impl_t;
 
 static int64_t
-memory_next_time(instrumentation_clock_t* self, int64_t clock_value) {
+memory_next_time(tlac_clock_t* self, int64_t clock_value) {
 	memory_clock_impl_t* impl = (memory_clock_impl_t*)self->impl;
 	pthread_mutex_lock(&impl->mu);
 	int64_t base = impl->value;
@@ -19,7 +19,7 @@ memory_next_time(instrumentation_clock_t* self, int64_t clock_value) {
 }
 
 static void
-memory_destroy(instrumentation_clock_t* self) {
+memory_destroy(tlac_clock_t* self) {
 	if (!self) return;
 	memory_clock_impl_t* impl = (memory_clock_impl_t*)self->impl;
 	if (impl) {
@@ -29,23 +29,30 @@ memory_destroy(instrumentation_clock_t* self) {
 	free(self);
 }
 
-instrumentation_clock_t*
+tlac_clock_t*
 memory_clock_create(clock_error_t* err) {
 	if (err) *err = CLOCK_OK;
 
-	instrumentation_clock_t* c =
-		(instrumentation_clock_t*)calloc(1, sizeof(*c));
-	if (!c) { if (err) *err = CLOCK_ERR_NOMEM; return NULL; }
+	tlac_clock_t* c = (tlac_clock_t*)calloc(1, sizeof(*c));
+	if (!c) {
+		if (err) *err = CLOCK_ERR_NOMEM;
+		return NULL;
+	}
 
 	memory_clock_impl_t* impl =
 		(memory_clock_impl_t*)calloc(1, sizeof(*impl));
-	if (!impl) { free(c); if (err) *err = CLOCK_ERR_NOMEM; return NULL; }
+	if (!impl) {
+		free(c);
+		if (err) *err = CLOCK_ERR_NOMEM;
+		return NULL;
+	}
 
 	impl->value = 0;
 	pthread_mutex_init(&impl->mu, NULL);
 
-	c->get_next_time = memory_next_time;
+	c->next_time = memory_next_time;
 	c->destroy = memory_destroy;
+	c->type = CLOCK_MEMORY;
 	c->impl = impl;
 	return c;
 }

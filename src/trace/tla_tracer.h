@@ -14,7 +14,7 @@ typedef struct tla_tracer tla_tracer_t;
 /* Creates tracer writing to trace_path. Takes ownership of clock (may be NULL).
    If clock is NULL, behaves like LOCAL clock (returns same clock value). */
 tla_tracer_t*
-tla_tracer_create(const char* trace_path, instrumentation_clock_t* clock);
+tla_tracer_create(const char* trace_path, tlac_clock_t* clock);
 
 /* Flushes and releases all resources. */
 void
