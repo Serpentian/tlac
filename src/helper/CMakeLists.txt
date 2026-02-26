@@ -4,7 +4,7 @@ add_library(tlatrace_helper
 
 target_include_directories(tlatrace_helper
   PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_LIST_DIR}/..
 )
 
 # cJSON dependency

@@ -5,10 +5,7 @@ add_library(tlatrace
 
 target_include_directories(tlatrace
   PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/src/clock
-    ${CMAKE_SOURCE_DIR}/src/helper
+    ${CMAKE_CURRENT_LIST_DIR}/..
 )
 
 # Link internal libs + cjson (via helper)
