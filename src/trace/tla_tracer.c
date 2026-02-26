@@ -29,20 +29,24 @@ struct tla_tracer {
 	pthread_mutex_t mu;
 };
 
-static char* dupstr(const char* s) {
+static char*
+dupstr(const char* s) {
 	if (!s) s = "";
 	size_t n = strlen(s);
 	char* r = (char*)malloc(n + 1);
-	if (!r) return NULL;
+	if (!r)
+		return NULL;
 	memcpy(r, s, n + 1);
 	return r;
 }
 
-static void vec_push(trace_item_vec_t* v, trace_item_t* it) {
+static void
+vec_push(trace_item_vec_t* v, trace_item_t* it) {
 	if (!v || !it) return;
 	if (v->len == v->cap) {
 		size_t ncap = v->cap ? v->cap * 2 : 4;
-		trace_item_t** ni = (trace_item_t**)realloc(v->items, ncap * sizeof(*ni));
+		trace_item_t** ni =
+			(trace_item_t**)realloc(v->items, ncap * sizeof(*ni));
 		if (!ni) return;
 		v->items = ni;
 		v->cap = ncap;
@@ -50,16 +54,19 @@ static void vec_push(trace_item_vec_t* v, trace_item_t* it) {
 	v->items[v->len++] = it;
 }
 
-static void vec_clear(trace_item_vec_t* v) {
+static void
+vec_clear(trace_item_vec_t* v) {
 	if (!v) return;
-	for (size_t i = 0; i < v->len; i++) trace_item_destroy(v->items[i]);
+	for (size_t i = 0; i < v->len; i++)
+		trace_item_destroy(v->items[i]);
 	free(v->items);
 	v->items = NULL;
 	v->len = 0;
 	v->cap = 0;
 }
 
-static update_entry_t* find_or_create(update_entry_t** head, const char* var) {
+static update_entry_t*
+find_or_create(update_entry_t** head, const char* var) {
 	for (update_entry_t* e = *head; e; e = e->next) {
 		if (strcmp(e->var, var) == 0) return e;
 	}
@@ -71,7 +78,8 @@ static update_entry_t* find_or_create(update_entry_t** head, const char* var) {
 	return e;
 }
 
-static void updates_clear(update_entry_t** head) {
+static void
+updates_clear(update_entry_t** head) {
 	update_entry_t* e = *head;
 	while (e) {
 		update_entry_t* n = e->next;
@@ -83,7 +91,8 @@ static void updates_clear(update_entry_t** head) {
 	*head = NULL;
 }
 
-static void uuid_like(char out[64]) {
+static void
+uuid_like(char out[64]) {
 	/* Not cryptographically strong; good enough for a logger id. */
 	unsigned long long a = (unsigned long long)time(NULL);
 	unsigned long long b = (unsigned long long)getpid();
@@ -96,7 +105,8 @@ static void uuid_like(char out[64]) {
 	  (a ^ b ^ c) & 0xffffffffffffULL);
 }
 
-tla_tracer_t* tla_tracer_create(const char* trace_path, tlac_clock_t* clock) {
+tla_tracer_t*
+tla_tracer_create(const char* trace_path, tlac_clock_t* clock) {
 	if (!trace_path || !trace_path[0] || !clock) return NULL;
 
 	FILE* f = fopen(trace_path, "wb");
@@ -116,7 +126,8 @@ tla_tracer_t* tla_tracer_create(const char* trace_path, tlac_clock_t* clock) {
 	return t;
 }
 
-void tla_tracer_destroy(tla_tracer_t* t) {
+void
+tla_tracer_destroy(tla_tracer_t* t) {
 	if (!t) return;
 	pthread_mutex_lock(&t->mu);
 	updates_clear(&t->updates);
@@ -129,17 +140,24 @@ void tla_tracer_destroy(tla_tracer_t* t) {
 	free(t);
 }
 
-void tla_tracer_notify_change(tla_tracer_t* t, const char* variable, const cJSON* path_array, const char* op, const cJSON* args_array) {
+void
+tla_tracer_notify_change(tla_tracer_t* t, const char* variable,
+			 const cJSON* path_array, const char* op,
+			 const cJSON* args_array) {
 	if (!t || !variable || !variable[0] || !op || !op[0]) return;
 
 	cJSON* path = NULL;
 	cJSON* args = NULL;
 
-	if (path_array && cJSON_IsArray((cJSON*)path_array)) path = ndjson_deep_dup(path_array);
-	else path = cJSON_CreateArray();
+	if (path_array && cJSON_IsArray((cJSON*)path_array))
+		path = ndjson_deep_dup(path_array);
+	else
+		path = cJSON_CreateArray();
 
-	if (args_array && cJSON_IsArray((cJSON*)args_array)) args = ndjson_deep_dup(args_array);
-	else args = cJSON_CreateArray();
+	if (args_array && cJSON_IsArray((cJSON*)args_array))
+		args = ndjson_deep_dup(args_array);
+	else
+		args = cJSON_CreateArray();
 
 	if (!path || !args) {
 		if (path) cJSON_Delete(path);
@@ -159,7 +177,8 @@ void tla_tracer_notify_change(tla_tracer_t* t, const char* variable, const cJSON
 	pthread_mutex_unlock(&t->mu);
 }
 
-static int write_line(FILE* f, const char* s) {
+static int
+write_line(FILE* f, const char* s) {
 	if (!f || !s) return -1;
 	if (fputs(s, f) == EOF) return -1;
 	if (fputc('\n', f) == EOF) return -1;
@@ -167,7 +186,10 @@ static int write_line(FILE* f, const char* s) {
 	return 0;
 }
 
-static int64_t log_changes_locked(tla_tracer_t* t, const char* event_name, const cJSON* event_args_array, const char* desc, int64_t clock_value_used) {
+static int64_t
+log_changes_locked(tla_tracer_t* t, const char* event_name,
+		   const cJSON* event_args_array, const char* desc,
+		   int64_t clock_value_used) {
 	cJSON* jsonEvent = cJSON_CreateObject();
 	if (!jsonEvent) return -1;
 
@@ -185,20 +207,19 @@ static int64_t log_changes_locked(tla_tracer_t* t, const char* event_name, const
 		cJSON_AddItemToObject(jsonEvent, e->var, jsonActions);
 	}
 
-	if (event_name && event_name[0]) {
+	if (event_name && event_name[0])
 		cJSON_AddStringToObject(jsonEvent, "event", event_name);
+
+	if (event_args_array && cJSON_IsArray((cJSON*)event_args_array)
+	    && cJSON_GetArraySize((cJSON*)event_args_array) > 0) {
+		cJSON_AddItemToObject(jsonEvent, "event_args",
+				      ndjson_deep_dup(event_args_array));
 	}
 
-	if (event_args_array && cJSON_IsArray((cJSON*)event_args_array) && cJSON_GetArraySize((cJSON*)event_args_array) > 0) {
-		cJSON_AddItemToObject(jsonEvent, "event_args", ndjson_deep_dup(event_args_array));
-	}
-
-	if (desc && desc[0]) {
+	if (desc && desc[0])
 		cJSON_AddStringToObject(jsonEvent, "desc", desc);
-	}
 
 	cJSON_AddStringToObject(jsonEvent, "logger", t->guid);
-
 	char* line = cJSON_PrintUnformatted(jsonEvent);
 	cJSON_Delete(jsonEvent);
 
@@ -211,31 +232,19 @@ static int64_t log_changes_locked(tla_tracer_t* t, const char* event_name, const
 	return rc == 0 ? clock_value_used : -1;
 }
 
-int64_t tla_tracer_log(tla_tracer_t* t, const char* event_name, const cJSON* event_args_array, int64_t clock_value, const char* desc) {
+int64_t
+tla_tracer_log(tla_tracer_t* t, const char* event_name,
+	       const cJSON* event_args_array, int64_t clock_value,
+	       const char* desc) {
 	if (!t) return -1;
 
 	int64_t new_clock = clock_next_time(t->clock, clock_value);
 	if (new_clock < 0) return -1;
 
 	pthread_mutex_lock(&t->mu);
-	int64_t used = log_changes_locked(t, event_name ? event_name : "", event_args_array, desc ? desc : "", new_clock);
+	int64_t used = log_changes_locked(t, event_name ? event_name : "",
+					  event_args_array,
+					  desc ? desc : "", new_clock);
 	pthread_mutex_unlock(&t->mu);
-
 	return used;
-}
-
-int64_t tla_tracer_log_exception(tla_tracer_t* t, const char* desc) {
-	return tla_tracer_log_event_desc(t, "__exception", desc ? desc : "");
-}
-
-int64_t tla_tracer_log0(tla_tracer_t* t) {
-	return tla_tracer_log(t, "", NULL, 0, "");
-}
-
-int64_t tla_tracer_log_event(tla_tracer_t* t, const char* event_name) {
-	return tla_tracer_log(t, event_name ? event_name : "", NULL, 0, "");
-}
-
-int64_t tla_tracer_log_event_desc(tla_tracer_t* t, const char* event_name, const char* desc) {
-	return tla_tracer_log(t, event_name ? event_name : "", NULL, 0, desc ? desc : "");
 }

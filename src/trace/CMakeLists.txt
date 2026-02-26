@@ -1,7 +1,6 @@
 add_library(tlatrace
   tla_tracer.c
   trace_item.c
-  virtual_field.c
 )
 
 target_include_directories(tlatrace

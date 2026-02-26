@@ -7,11 +7,6 @@
 extern "C" {
 #endif
 
-/* Creates a deep-copied cJSON array from an array of cJSON* values.
-   Each element is duplicated; input elements remain owned by the caller. */
-cJSON*
-ndjson_array_of(const cJSON* const* values, int n);
-
 /* Convenience creators */
 cJSON*
 ndjson_string(const char* s);

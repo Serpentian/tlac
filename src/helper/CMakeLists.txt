@@ -1,5 +1,4 @@
 add_library(tlatrace_helper
-  configuration_manager.c
   ndjson_serializer.c
 )
 
