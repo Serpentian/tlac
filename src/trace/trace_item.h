@@ -1,5 +1,5 @@
-#ifndef TRACE_ITEM_H
-#define TRACE_ITEM_H
+#ifndef TLAC_TRACE_ITEM_H
+#define TLAC_TRACE_ITEM_H
 
 #include "cJSON.h"
 

@@ -1,5 +1,5 @@
-#ifndef TLA_TRACER_H
-#define TLA_TRACER_H
+#ifndef TLAC_TRACER_H
+#define TLAC_TRACER_H
 
 #include <stdint.h>
 #include "cJSON.h"

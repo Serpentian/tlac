@@ -1,5 +1,5 @@
-#ifndef MEMORY_CLOCK_H
-#define MEMORY_CLOCK_H
+#ifndef TLAC_MEMORY_CLOCK_H
+#define TLAC_MEMORY_CLOCK_H
 
 #include "clock.h"
 #include "clock_exception.h"
