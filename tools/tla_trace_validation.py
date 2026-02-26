@@ -1,6 +1,7 @@
 import os
 import argparse
 from subprocess import Popen
+from typing import Optional
 
 # Path to TLA installation
 tla_dir = os.environ.get("TLA_DIR", "/opt/TLAToolbox-1.8.0-nightly/toolbox")
@@ -9,7 +10,7 @@ community_modules_jar = os.path.join(tla_dir, "CommunityModules-deps.jar")
 tla_cp = f"{tla_jar}:{community_modules_jar}"
 
 # Run TLC
-def run_tla(trace_spec,trace="trace.ndjson",config="conf.ndjson",dfs=False):
+def run_tla(trace_spec,trace="trace.ndjson",config="conf.ndjson",dfs=False) -> int:
     os.environ["TRACE_PATH"] = trace
     os.environ["CONFIG_PATH"] = config
     if dfs:
@@ -31,8 +32,8 @@ def run_tla(trace_spec,trace="trace.ndjson",config="conf.ndjson",dfs=False):
             "tlc2.TLC",
             "-note",
             trace_spec])
-    tla_trace_validation_process.wait()
-    tla_trace_validation_process.terminate()
+    rc = tla_trace_validation_process.wait()
+    return rc
 
 if __name__ == "__main__":
     # Read program args
@@ -43,4 +44,4 @@ if __name__ == "__main__":
     parser.add_argument('-dfs', '--dfs', type=bool, action=argparse.BooleanOptionalAction, help="depth-first search")
     args = parser.parse_args()
     # Run
-    run_tla(args.spec,args.trace,args.config,args.dfs)
+    raise SystemExit(run_tla(args.spec, args.trace, args.config, args.dfs))

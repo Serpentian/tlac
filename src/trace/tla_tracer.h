@@ -27,7 +27,7 @@ tla_tracer_notify_change(tla_tracer_t* t, const char* variable,
 			 const cJSON* args_array);
 
 /* Log accumulated changes. event_args_array can be NULL or JSON array.
-   clock_value is the local clock to synchronize with (Java version uses 0 by default).
+   clock_value is the local clock to synchronize with.
    desc may be NULL/empty.
    Returns the clock value used (or -1 on error). */
 int64_t
